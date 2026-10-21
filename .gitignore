@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.vite/
+*.log
+
+# 本地调试截图（可作为展示素材保留）
+# shots/

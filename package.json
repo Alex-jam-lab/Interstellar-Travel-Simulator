@@ -1,0 +1,19 @@
+{
+  "name": "interstellar-wormhole",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "基于 Three.js 与 GLSL Raymarching 的《星际穿越》虫洞穿梭沉浸式体验",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5173",
+    "build": "vite build",
+    "standalone": "vite build && python tools/make_standalone.py",
+    "preview": "vite preview --host 127.0.0.1 --port 4173"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "vite": "^8.3.5"
+  }
+}

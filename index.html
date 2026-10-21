@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#02050a" />
+  <title>星际穿越 · 虫洞穿梭</title>
+  <meta name="description" content="基于 Three.js 与 GLSL Raymarching 的《星际穿越》沉浸式虫洞穿梭体验。全中文全息 HUD、实时引力透镜与 Web Audio 原生宇宙音效。" />
+</head>
+<body>
+  <div id="app">
+    <div id="stage" aria-hidden="true"></div>
+
+    <!-- ============ 全息 HUD ============ -->
+    <div id="hud" class="hud is-hidden">
+      <div class="hud-frame" aria-hidden="true">
+        <i class="frame-corner tl"></i><i class="frame-corner tr"></i>
+        <i class="frame-corner bl"></i><i class="frame-corner br"></i>
+      </div>
+
+      <header class="hud-top">
+        <div class="brand">
+          <div class="brand-mark"><span></span><span></span><span></span></div>
+          <div class="brand-text">
+            <div class="brand-line">ENDURANCE <em>·</em> 永续号</div>
+            <div class="brand-sub">WORMHOLE TRANSIT SYSTEM / 虫洞穿越系统</div>
+          </div>
+        </div>
+
+        <div class="top-center">
+          <div class="mission-clock">
+            <span class="label">任务时钟</span>
+            <span id="missionClock" class="clock">T+ 00:00:00</span>
+          </div>
+          <div class="top-divider"></div>
+          <div class="link-status">
+            <i class="dot"></i><span>量子链路</span><b id="linkText">稳定</b>
+          </div>
+        </div>
+
+        <div class="top-actions">
+          <button id="audioToggle" class="icon-btn" type="button" aria-label="切换声音">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4Zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4Z"/><path class="wave" d="M17.5 5.5a8 8 0 0 1 0 13"/></svg>
+          </button>
+          <button id="paramsToggle" class="icon-btn text-btn" type="button" aria-label="打开参数面板">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10M8 5v4M16 15v4"/></svg>
+            <span>参数</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- 左：阶段航线 -->
+      <aside class="stage-panel glass">
+        <div class="panel-head">
+          <span class="panel-index">01</span>
+          <div>
+            <div class="panel-title">库珀航程</div>
+            <div class="panel-sub">COOPER TRAJECTORY</div>
+          </div>
+        </div>
+
+        <div class="stage-list" id="stageList">
+          <div class="stage-item is-active" data-stage="1">
+            <div class="stage-rail"><i></i></div>
+            <div class="stage-body">
+              <div class="stage-kicker">PHASE 01 / 太阳系端</div>
+              <div class="stage-name">接近虫洞喉部</div>
+              <div class="stage-en">APPROACH PORTAL</div>
+              <div class="stage-desc">球形透镜开始弯曲星光，爱因斯坦环正在成形。</div>
+            </div>
+          </div>
+          <div class="stage-item" data-stage="2">
+            <div class="stage-rail"><i></i></div>
+            <div class="stage-body">
+              <div class="stage-kicker">PHASE 02 / 四维折叠</div>
+              <div class="stage-name">喉部穿梭</div>
+              <div class="stage-en">THROAT TRANSIT</div>
+              <div class="stage-desc">空间拉伸、粒子剪切与量子湍流达到峰值。</div>
+            </div>
+          </div>
+          <div class="stage-item" data-stage="3">
+            <div class="stage-rail"><i></i></div>
+            <div class="stage-body">
+              <div class="stage-kicker">PHASE 03 / 巨人座星系</div>
+              <div class="stage-name">异星系降临</div>
+              <div class="stage-en">GARGANTUA EMERGENCE</div>
+              <div class="stage-desc">太阳系缩成身后的球面镜像，巨人黑洞展开。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="journey-progress">
+          <div class="progress-label"><span>航程进度</span><b id="journeyPercent">00.0%</b></div>
+          <div class="progress-track"><i id="journeyBar"></i><span class="progress-notch"></span></div>
+          <div class="progress-scale"><span>SOL</span><span>THROAT</span><span>GARGANTUA</span></div>
+        </div>
+      </aside>
+
+      <!-- 右：遥测 -->
+      <aside class="telemetry glass">
+        <div class="panel-head">
+          <span class="panel-index">02</span>
+          <div>
+            <div class="panel-title">飞船遥测</div>
+            <div class="panel-sub">ENDURANCE TELEMETRY</div>
+          </div>
+          <span class="live-tag"><i></i>LIVE</span>
+        </div>
+
+        <div class="telem-primary">
+          <div class="telem-cell wide">
+            <span class="telem-label">虫洞喉部距离</span>
+            <div class="telem-value"><b id="throatDistance">000,000</b><span>km</span></div>
+            <div class="telem-bar"><i id="throatBar"></i></div>
+          </div>
+          <div class="telem-cell">
+            <span class="telem-label">引力透镜系数</span>
+            <div class="telem-value small"><b id="lensFactor">0.000</b><span>κ</span></div>
+          </div>
+          <div class="telem-cell">
+            <span class="telem-label">多普勒红移</span>
+            <div class="telem-value small"><b id="doppler">+0.000</b><span>z</span></div>
+          </div>
+          <div class="telem-cell">
+            <span class="telem-label">时空曲率</span>
+            <div class="telem-value small"><b id="curvature">0.000</b><span>R<sub>μν</sub></span></div>
+          </div>
+          <div class="telem-cell">
+            <span class="telem-label">穿越阶段</span>
+            <div class="telem-value small"><b id="phaseMetric">01 / 03</b><span>PHASE</span></div>
+          </div>
+        </div>
+
+        <div class="telem-section-title"><span>姿态解算</span><em>ATTITUDE</em></div>
+        <div class="attitude">
+          <div class="attitude-dial">
+            <svg viewBox="0 0 120 120" aria-hidden="true">
+              <circle cx="60" cy="60" r="50" class="dial-ring"/>
+              <circle cx="60" cy="60" r="38" class="dial-ring faint"/>
+              <path d="M60 6v10M60 104v10M6 60h10M104 60h10" class="dial-tick"/>
+              <g id="attitudeHorizon">
+                <path d="M18 60h84" class="horizon-main"/>
+                <path d="M28 48h64" class="horizon-soft"/>
+                <path d="M28 72h64" class="horizon-soft"/>
+                <path d="M60 32l5 9h-10z" class="dial-pointer"/>
+              </g>
+              <path d="M60 60l0 -22" id="rollNeedle" class="roll-needle"/>
+            </svg>
+            <div class="dial-readout"><b id="pitchValue">+00.0°</b><span>PITCH</span></div>
+          </div>
+          <div class="attitude-grid">
+            <div><span>偏航 YAW</span><b id="yawValue">+000.0°</b></div>
+            <div><span>滚转 ROLL</span><b id="rollValue">+000.0°</b></div>
+            <div><span>俯仰 PITCH</span><b id="pitchValue2">+000.0°</b></div>
+            <div><span>航向 HEADING</span><b id="headingValue">000°</b></div>
+          </div>
+        </div>
+
+        <div class="telem-section-title"><span>巡航坐标</span><em>NAV COORDINATE</em></div>
+        <div class="coord-grid">
+          <div><span>X</span><b id="coordX">+00000.0</b></div>
+          <div><span>Y</span><b id="coordY">+00000.0</b></div>
+          <div><span>Z</span><b id="coordZ">+00000.0</b></div>
+        </div>
+
+        <div class="radar">
+          <div class="radar-head"><span>引力场扫描</span><em>GRAVITY FIELD</em></div>
+          <svg id="radarSvg" viewBox="0 0 240 96" aria-hidden="true">
+            <defs>
+              <linearGradient id="radarGrad" x1="0" x2="1">
+                <stop offset="0" stop-color="#8fe8ff" stop-opacity=".05"/>
+                <stop offset=".5" stop-color="#8fe8ff" stop-opacity=".5"/>
+                <stop offset="1" stop-color="#8fe8ff" stop-opacity=".05"/>
+              </linearGradient>
+            </defs>
+            <path d="M0 80h240" class="radar-axis"/>
+            <path id="radarWave" d="M0 80 C 30 80 34 70 48 72 S 70 80 88 78 S 110 20 128 44 S 145 80 162 74 S 200 62 240 78" fill="none" class="radar-line"/>
+            <path id="radarWave2" d="M0 84 C 40 84 44 78 60 80 S 90 86 110 82 S 134 30 150 50 S 175 86 196 82 S 220 76 240 84" fill="none" class="radar-line soft"/>
+            <circle id="radarPulse" cx="128" cy="44" r="3" class="radar-dot"/>
+          </svg>
+        </div>
+      </aside>
+
+      <!-- 中央准星与罗盘 -->
+      <div class="reticle" aria-hidden="true">
+        <svg viewBox="0 0 200 200">
+          <circle cx="100" cy="100" r="42" class="ret-ring"/>
+          <circle cx="100" cy="100" r="58" class="ret-ring faint"/>
+          <path d="M100 18v18M100 164v18M18 100h18M164 100h18" class="ret-tick"/>
+          <path d="M100 52l6 10-6-3-6 3z" class="ret-arrow"/>
+          <path d="M100 148l6-10-6 3-6-3z" class="ret-arrow dim"/>
+          <circle cx="100" cy="100" r="2" class="ret-dot"/>
+          <path id="reticleRoll" d="M100 30a70 70 0 0 1 0 0" class="ret-roll"/>
+        </svg>
+      </div>
+
+      <div class="compass">
+        <div class="compass-arc"></div>
+        <div class="compass-ticks" id="compassTicks"></div>
+        <div class="compass-needle"></div>
+        <div class="compass-readout"><b id="headingBig">000</b><span>°</span><em>航向</em></div>
+      </div>
+
+      <div id="phaseBanner" class="phase-banner">
+        <div class="phase-kicker" id="phaseKicker">PHASE 01 / SOL SYSTEM</div>
+        <div class="phase-title" id="phaseTitle">接近虫洞喉部</div>
+        <div class="phase-sub" id="phaseSub">APPROACH PORTAL</div>
+      </div>
+
+      <div id="subtitle" class="subtitle">
+        <span class="subtitle-mark">▸</span>
+        <span id="subtitleText">土星轨道 · 距虫洞 0.8 AU · 永续号正在接近球形事件界面</span>
+      </div>
+
+      <div class="reticle-status">
+        <span>目标锁定</span><i></i><b id="reticle-status-target">WORMHOLE THROAT</b>
+      </div>
+
+      <!-- 底部操控 -->
+      <footer class="controls">
+        <div class="control-cluster">
+          <div class="mode-switch">
+            <button id="autoBtn" class="mode-btn is-active" type="button"><i></i>自动驾驶</button>
+            <button id="manualBtn" class="mode-btn" type="button"><i></i>手动驾驶</button>
+          </div>
+          <div class="key-hints">
+            <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 俯仰 / 偏航</span>
+            <span><kbd>Q</kbd><kbd>E</kbd> 滚转</span>
+            <span><kbd>SHIFT</kbd> 加速 <kbd>SPACE</kbd> 减速</span>
+            <span><kbd>拖动</kbd> 自由观察</span>
+          </div>
+        </div>
+
+        <div class="throttle">
+          <div class="throttle-head"><span>曲速推进器</span><em>WARP THROTTLE</em></div>
+          <div class="throttle-track">
+            <i id="throttleBar"></i>
+            <div class="throttle-marks"><span></span><span></span><span></span><span></span></div>
+          </div>
+          <div class="throttle-info"><b id="speedReadout">0.218</b><span>c</span><em id="boostState">巡航</em></div>
+        </div>
+
+        <div class="control-actions">
+          <button id="boostBtn" class="hold-btn" type="button">
+            <span class="hold-ring"></span>
+            <b>曲速爆发</b><em>SHIFT</em>
+          </button>
+          <button id="resetBtn" class="ghost-btn" type="button" title="重播库珀航程">
+            <svg viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 2 7M4 4v6h6"/></svg>
+            <span>重播航程</span>
+          </button>
+        </div>
+      </footer>
+
+      <div id="toast" class="toast"></div>
+    </div>
+
+    <!-- ============ 参数面板 ============ -->
+    <aside id="paramsPanel" class="params-panel" aria-hidden="true">
+      <div class="params-head">
+        <div>
+          <div class="params-title">时空参数校准</div>
+          <div class="params-sub">SPACETIME CALIBRATION</div>
+        </div>
+        <button id="paramsClose" class="close-btn" type="button" aria-label="关闭参数面板">✕</button>
+      </div>
+
+      <div class="params-body">
+        <label class="slider-row">
+          <span class="slider-label"><b>虫洞喉部半径</b><em>THROAT RADIUS</em></span>
+          <span class="slider-value"><b id="valThroat">10.0</b><i>m<sub>throat</sub></i></span>
+          <input id="paramThroat" type="range" min="6" max="16" step="0.5" value="10" />
+          <span class="slider-hint">决定球形事件界面的尺度与透镜曲率。</span>
+        </label>
+        <label class="slider-row">
+          <span class="slider-label"><b>引力透镜强度</b><em>LENSING INTENSITY</em></span>
+          <span class="slider-value"><b id="valLens">1.00</b><i>κ</i></span>
+          <input id="paramLens" type="range" min="0.2" max="2.4" step="0.01" value="1" />
+          <span class="slider-hint">控制背景星系的弯曲、拉伸与爱因斯坦环亮度。</span>
+        </label>
+        <label class="slider-row">
+          <span class="slider-label"><b>色差偏折</b><em>CHROMATIC ABERRATION</em></span>
+          <span class="slider-value"><b id="valChroma">0.55</b><i>ε</i></span>
+          <input id="paramChroma" type="range" min="0" max="1.5" step="0.01" value="0.55" />
+          <span class="slider-hint">模拟高维激波下不同波长的折射偏移。</span>
+        </label>
+        <label class="slider-row">
+          <span class="slider-label"><b>粒子密度</b><em>PARTICLE DENSITY</em></span>
+          <span class="slider-value"><b id="valDust">1.00</b><i>ρ</i></span>
+          <input id="paramDust" type="range" min="0" max="2" step="0.01" value="1" />
+          <span class="slider-hint">调整喉部高能粒子雾与星尘的浓度。</span>
+        </label>
+        <label class="slider-row">
+          <span class="slider-label"><b>曝光强度</b><em>EXPOSURE</em></span>
+          <span class="slider-value"><b id="valExposure">1.00</b><i>EV</i></span>
+          <input id="paramExposure" type="range" min="0.55" max="1.6" step="0.01" value="1" />
+          <span class="slider-hint">校准全息成片的亮度与高光溢出。</span>
+        </label>
+        <label class="slider-row">
+          <span class="slider-label"><b>主音量</b><em>MASTER AUDIO</em></span>
+          <span class="slider-value"><b id="valVolume">70</b><i>%</i></span>
+          <input id="paramVolume" type="range" min="0" max="100" step="1" value="70" />
+          <span class="slider-hint">合成深空低频、推进器与量子撕裂音效的总音量。</span>
+        </label>
+
+        <div class="params-actions">
+          <button id="paramsReset" type="button" class="ghost-btn">恢复默认参数</button>
+        </div>
+        <div class="params-foot">ALL SYSTEMS NOMINAL · DSH / INTERSTELLAR EXPERIENCE</div>
+      </div>
+    </aside>
+
+    <!-- ============ 启动界面 ============ -->
+    <section id="intro" class="intro">
+      <div class="intro-backdrop"></div>
+      <div class="intro-inner">
+        <div class="intro-topline">
+          <span class="intro-tag">Lazarus Mission / 拉撒路计划</span>
+          <span class="intro-year">2037 · SATURN ORBIT</span>
+        </div>
+
+        <div class="intro-main">
+          <div class="intro-eyebrow"><i></i>穿越事件视界 · 寻找人类的新家园</div>
+          <h1 class="intro-title">
+            <span class="title-en">INTERSTELLAR</span>
+            <span class="title-cn">星际穿越</span>
+          </h1>
+          <div class="intro-line"></div>
+          <p class="intro-desc">
+            土星轨道之外，一颗球形虫洞正在弯曲时空。<br />
+            登上永续号，穿过喉部，在巨人座星系的另一端寻找答案。
+          </p>
+
+          <div class="intro-stats">
+            <div><span>目的地</span><b>Gargantua System</b></div>
+            <div><span>航程阶段</span><b>03 Phases</b></div>
+            <div><span>引力透镜</span><b>Einstein Ring</b></div>
+          </div>
+
+          <button id="startBtn" class="start-btn" type="button">
+            <span class="start-btn-bg"></span>
+            <span class="start-btn-content">
+              <b>开启库珀穿梭航程</b>
+              <em>BEGIN COOPER TRANSIT</em>
+            </span>
+            <span class="start-arrow">→</span>
+          </button>
+
+          <div class="intro-note">
+            <span>建议佩戴耳机 · 音效由 Web Audio 实时合成</span>
+            <span>支持键盘 / 鼠标 / 触控拖拽</span>
+          </div>
+        </div>
+
+        <div class="intro-corner tl"></div><div class="intro-corner tr"></div>
+        <div class="intro-corner bl"></div><div class="intro-corner br"></div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

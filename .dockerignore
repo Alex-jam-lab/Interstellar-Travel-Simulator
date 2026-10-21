@@ -1,0 +1,10 @@
+node_modules
+dist
+.git
+.github
+shots
+tools
+*.md
+星际穿越-离线版.html
+启动预览.cmd
+打开离线版.cmd
