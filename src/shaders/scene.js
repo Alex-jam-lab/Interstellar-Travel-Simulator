@@ -418,7 +418,7 @@ export const sceneFragmentShader = /* glsl */ `
     float trans = 1.0;
     bool captured = false;
 
-    for (int i = 0; i < 160; i++) {
+    for (int i = 0; i < 128; i++) {
       float r2 = dot(p, p);
       float r = sqrt(r2);
       if (r < 1.0) {
@@ -708,7 +708,7 @@ export const sceneFragmentShader = /* glsl */ `
     vec3 hitP = vec3(0.0);
     vec3 volume = vec3(0.0);
 
-    for (int i = 0; i < 72; i++) {
+    for (int i = 0; i < 56; i++) {
       vec3 p = ro + rd * tRay;
       if (p.z < -uThroat * 2.6 || p.z > uThroat * 2.6) break;
 

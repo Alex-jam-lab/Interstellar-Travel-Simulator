@@ -304,7 +304,7 @@ float tunnelSDF(vec3 p) {
 ```
 
 ```glsl
-for (int i = 0; i < 72; i++) {
+for (int i = 0; i < 56; i++) {
   vec3 p = ro + rd * tRay;
   if (p.z < -uThroat * 2.6 || p.z > uThroat * 2.6) break;
 
@@ -385,7 +385,7 @@ vec3 traceGargantua(vec3 ro, vec3 rd, vec3 baseColor) {
   float trans = 1.0;
   bool captured = false;
 
-  for (int i = 0; i < 160; i++) {
+  for (int i = 0; i < 128; i++) {
     float r2 = dot(p, p);
     float r = sqrt(r2);
 
@@ -606,8 +606,8 @@ requestAnimationFrame(function loop(now) {
 | --- | --- | --- |
 | 球外 · 太阳系端 | 0 | 只有解析射线-球求交与程序化天球 |
 | 球面 | 0 | 折射是解析求交，不 raymarch |
-| 喉部 | ≤ 72 步 | SDF 球体追踪；接近表面时自动缩小步长 |
-| Gargantua 黑洞 | ≤ 160 步 | 仅当 `ro.z < 0`、`uBhActive > 0` 且冲击参数落在盘面附近时执行 |
+| 喉部 | ≤ 56 步 | SDF 球体追踪；接近表面时自动缩小步长 |
+| Gargantua 黑洞 | ≤ 128 步 | 仅当 `ro.z < 0`、`uBhActive > 0` 且冲击参数落在盘面附近时执行 |
 | 后期 | 固定采样 | 6 方向 Bloom + 径向拖尾 + 色差 |
 
 ### 6.2 关键技巧
@@ -619,10 +619,10 @@ requestAnimationFrame(function loop(now) {
 5. **廉价噪声**：管道内部用三角函数流场，lacunarity 噪声只用于每像素一次的天球 / 晶面焦散。
 6. **屏幕空间钉扎星点**：避免高倍率球面重映射把星点放大成巨大光斑，同时不增加额外 3D 采样。
 7. **后期节流**：Bloom 只用 6 个方向 × 2 个半径；色差只用 R/B 两个单点偏移，中心通道复用已采样的 base。
-8. **动态分辨率**：默认 DPR ≤ 1.5，检测到平均帧时间超过 42ms 时自动降低 `resolutionScale` 并重建 RT。
+8. **动态分辨率与帧率上限**：默认「自动」模式对 DPR 设上限（cap 1.0）并按 0.75 内部分辨率渲染；开场 10fps、航程中 45fps；帧时间超过 40ms 时继续降低 `resolutionScale`。参数面板可切换性能 / 自动 / 高清，或使用 `?quality=low`。
 9. **HUD 降频**：DOM 文本与 SVG 更新约 12.5Hz，渲染保持 60Hz，避免 DOM 成为瓶颈。
 10. **音频节点复用**：长音只创建一次；瞬态音效在停止后由 GC 回收；更新用 `setTargetAtTime` 平滑，避免 zipper noise。
-11. **黑洞积分早退**：先用直线冲击参数做快速剔除，只有 `bImpact < uDiskOuter + 4` 的光线才进入 160 步积分。
+11. **黑洞积分早退**：先用直线冲击参数做快速剔除，只有 `bImpact < uDiskOuter + 4` 的光线才进入 128 步积分。
 12. **FBM 只发生在盘面穿越点**：3D FBM 不在每个积分步执行，只在 `prevPlane * curPlane < 0` 时对插值交点采样一次。
 13. **事件视界提前终止**：`r < 1.0` 立即 break，不再对背景天球采样。
 
@@ -632,7 +632,7 @@ requestAnimationFrame(function loop(now) {
 - 关闭胶片颗粒与扫描线；
 - 减少星云 fbm 到 2 个 octave；
 - 降低管道最大步数到 48；
-- 将黑洞积分步数从 160 降到 96，并缩小 `uDiskOuter` 的快速剔除范围；
+- 将黑洞积分步数从 128 降到 96，并缩小 `uDiskOuter` 的快速剔除范围；
 - 若设备支持，使用 `powerPreference: 'high-performance'`；
 - 对 `prefers-reduced-motion` 用户减少镜头震动。
 

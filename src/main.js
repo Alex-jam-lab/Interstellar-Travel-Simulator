@@ -190,6 +190,14 @@ postUniforms.tDiffuse.value = renderTarget.texture;
 
 let resolutionScale = 1;
 
+const QUALITY_PRESETS = {
+  low: { cap: 0.8, scale: 0.55 },
+  auto: { cap: 1.0, scale: 0.75 },
+  high: { cap: 1.25, scale: 1.0 },
+};
+let qualityMode = 'auto';
+resolutionScale = QUALITY_PRESETS.auto.scale;
+
 /* ============================================================
    状态
    ============================================================ */
@@ -921,6 +929,10 @@ function bindUI() {
     $(`param${name}`).addEventListener('input', applyParamsFromInputs);
   });
 
+  document.querySelectorAll('[data-quality]').forEach((button) => {
+    button.addEventListener('click', () => setQuality(button.dataset.quality));
+  });
+
   // 鼠标 / 触摸自由观察
   const canvas = renderer.domElement;
   canvas.addEventListener('pointerdown', (e) => {
@@ -1038,10 +1050,47 @@ function buildCompass() {
    尺寸 / 自适应
    ============================================================ */
 
+function initQualityMode() {
+  let mode = 'auto';
+  try {
+    const fromUrl = new URLSearchParams(window.location.search).get('quality');
+    const saved = window.localStorage.getItem('interstellar-quality');
+    if (fromUrl === 'low' || fromUrl === 'high' || fromUrl === 'auto') mode = fromUrl;
+    else if (saved === 'low' || saved === 'high' || saved === 'auto') mode = saved;
+  } catch (error) {
+    // file:// 或隐私模式下 localStorage 可能不可用，忽略即可
+  }
+  qualityMode = mode;
+  resolutionScale = QUALITY_PRESETS[mode].scale;
+}
+
+function syncQualityButtons() {
+  document.querySelectorAll('[data-quality]').forEach((button) => {
+    button.classList.toggle('is-active', button.dataset.quality === qualityMode);
+  });
+}
+
+function setQuality(mode) {
+  if (!QUALITY_PRESETS[mode]) return;
+  qualityMode = mode;
+  resolutionScale = QUALITY_PRESETS[mode].scale;
+  try {
+    window.localStorage.setItem('interstellar-quality', mode);
+  } catch (error) {
+    // ignore
+  }
+  resize();
+  syncQualityButtons();
+  const labels = { low: '性能模式', auto: '自动画质', high: '高清模式' };
+  showToast(`渲染质量：${labels[mode]}`);
+}
+
 function resize() {
   const w = window.innerWidth;
   const h = window.innerHeight;
-  const dpr = Math.min(window.devicePixelRatio || 1, window.innerWidth < 700 ? 1.35 : 1.5) * resolutionScale;
+  const preset = QUALITY_PRESETS[qualityMode] || QUALITY_PRESETS.auto;
+  // 关键：对 DPR 做硬上限，避免 2K/4K 屏 + 150% 缩放下生成过大的 FBO
+  const dpr = Math.min(window.devicePixelRatio || 1, preset.cap) * resolutionScale;
   renderer.setPixelRatio(dpr);
   renderer.setSize(w, h, true);
   renderer.domElement.style.width = '100%';
@@ -1101,10 +1150,13 @@ function updateUniforms() {
 }
 
 let lastTimestamp = performance.now();
+let lastRenderAt = 0;
 let fpsAccum = 0;
 let fpsFrames = 0;
-let qualityReduced = false;
 let paused = false;
+
+const INTRO_FPS = 10;
+const ACTIVE_FPS = 45;
 
 function animate(now) {
   requestAnimationFrame(animate);
@@ -1112,7 +1164,14 @@ function animate(now) {
     lastTimestamp = now;
     return;
   }
-  const dt = Math.min(0.05, Math.max(0.001, (now - lastTimestamp) / 1000));
+
+  // 开场只以 10fps 渲染低负载预览；进入航程后限制在 45fps，避免高刷屏把 GPU 拉满
+  const frameInterval = 1000 / (state.started ? ACTIVE_FPS : INTRO_FPS);
+  if (now - lastRenderAt < frameInterval) return;
+  lastRenderAt = now;
+
+  const rawDelta = Math.max(0.001, (now - lastTimestamp) / 1000);
+  const dt = Math.min(0.05, rawDelta);
   lastTimestamp = now;
   state.time += dt;
   if (state.started) state.missionElapsed += dt;
@@ -1172,16 +1231,16 @@ function animate(now) {
   sceneMesh.visible = false;
   renderer.render(postScene, fullscreenCamera);
 
-  // 简单自适应降采样
-  fpsAccum += dt;
+  // 自适应降采样：只在「自动」模式、且航程开始后统计，避免开场 10fps 误判
+  fpsAccum += rawDelta;
   fpsFrames += 1;
-  if (fpsFrames >= 90) {
+  if (fpsFrames >= 20 && state.started && qualityMode === 'auto') {
     const avg = fpsAccum / fpsFrames;
-    if (!qualityReduced && avg > 0.042 && resolutionScale > 0.66) {
-      qualityReduced = true;
-      resolutionScale = Math.max(0.66, resolutionScale - 0.22);
+    if (avg > 0.04 && resolutionScale > 0.5) {
+      resolutionScale = Math.max(0.5, resolutionScale - 0.07);
       resize();
-      showToast('检测到 GPU 负载较高 · 已自动优化渲染分辨率', 2600);
+      lastRenderAt = performance.now();
+      showToast('检测到 GPU 负载较高 · 已自动降低渲染分辨率', 2600);
     }
     fpsAccum = 0;
     fpsFrames = 0;
@@ -1193,10 +1252,12 @@ function animate(now) {
    ============================================================ */
 
 function boot() {
+  initQualityMode();
   resize();
   buildCompass();
   updateParamsDisplays();
   bindUI();
+  syncQualityButtons();
 
   // 初始镜头
   updateCamera(0.016, 0);
