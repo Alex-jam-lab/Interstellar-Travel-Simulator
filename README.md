@@ -6,6 +6,8 @@
 
 > **在线演示**：部署到 GitHub Pages 后访问  
 > <https://alex-jam-lab.github.io/interstellar-wormhole/>
+>
+> **GitHub 仓库**：<https://github.com/Alex-jam-lab/interstellar-wormhole>
 
 ![星际穿越启动界面](shots/final-intro.png)
 
@@ -293,3 +295,10 @@ docker compose up -d --build
 > 「我们曾经仰望星空，思考我们在宇宙中的位置；而现在我们只会低头，担心如何在这片土地上生存。」
 >
 > —— 《星际穿越》
+
+---
+
+本项目为非官方技术演示，与《星际穿越》电影版权方无关；所有星空、黑洞、虫洞与 HUD 均为程序化生成，未使用电影素材。
+
+如果这个项目对你有启发，欢迎 Star ⭐
+
