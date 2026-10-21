@@ -5,9 +5,9 @@
 从太阳系端的球形虫洞出发，穿过四维折叠喉部，抵达巨人座星系，并见到 Gargantua 超大质量黑洞的吸积盘与光子环。全程配有全中文全息 HUD、实时引力透镜参数、Web Audio 原生合成宇宙音效，以及自动巡航 / 手动驾驶两种模式。
 
 > **在线演示**：部署到 GitHub Pages 后访问  
-> <https://alex-jam-lab.github.io/interstellar-wormhole/>
+> <https://alex-jam-lab.github.io/Interstellar-Travel-Simulator/>
 >
-> **GitHub 仓库**：<https://github.com/Alex-jam-lab/interstellar-wormhole>
+> **GitHub 仓库**：<https://github.com/Alex-jam-lab/Interstellar-Travel-Simulator>
 
 ![星际穿越启动界面](shots/final-intro.png)
 
