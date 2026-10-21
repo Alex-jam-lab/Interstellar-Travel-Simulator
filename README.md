@@ -139,7 +139,10 @@ wrangler pages deploy dist --project-name interstellar-wormhole
 1. 推送到 GitHub 的 `main` 分支；
 2. 打开仓库 `Settings → Pages`；
 3. 将 Source 设为 **GitHub Actions**；
-4. 等待 Actions 完成，访问 `https://<username>.github.io/<repo>/`。
+4. 在 `Actions → Deploy static site to GitHub Pages` 中点击 **Re-run all jobs**；
+5. 等待 Actions 完成，访问 `https://<username>.github.io/<repo>/`。
+
+> 重要：必须先在仓库设置中启用 Pages，再运行部署工作流。`GITHUB_TOKEN` 没有权限直接创建 Pages 站点，因此工作流不能替你完成“启用 Pages”这一步。
 
 `base: './'` 已经处理了子路径资源路径问题。
 
