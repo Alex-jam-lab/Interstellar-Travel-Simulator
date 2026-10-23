@@ -3,11 +3,11 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "基于 Three.js 与 GLSL Raymarching 的《星际穿越》虫洞穿梭沉浸式体验",
+  "description": "基于 Three.js 与 GLSL Raymarching 的《星际穿越》虫洞穿梭与米勒星着陆体验",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5173",
     "build": "vite build",
-    "standalone": "vite build && python tools/make_standalone.py",
+    "standalone": "vite build --config vite.standalone-index.config.js && vite build --config vite.standalone-miller.config.js && python tools/make_standalone.py",
     "preview": "vite preview --host 127.0.0.1 --port 4173"
   },
   "dependencies": {

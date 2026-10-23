@@ -1,7 +1,10 @@
 node_modules/
 dist/
+dist-standalone-index/
+dist-standalone-miller/
 .vite/
 *.log
+*.mp4
 
 # 本地调试截图（可作为展示素材保留）
 # shots/

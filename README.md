@@ -1,11 +1,15 @@
-# 星际穿越 · 球形虫洞与 Gargantua
+# 星际穿越 · 球形虫洞、Gargantua 与米勒星
 
-基于 **Three.js + GLSL Raymarching** 的《星际穿越》沉浸式虫洞穿梭网页应用。
+基于 **Three.js + GLSL Raymarching** 的《星际穿越》沉浸式 WebGL 体验。
 
 从太阳系端的球形虫洞出发，穿过四维折叠喉部，抵达巨人座星系，并见到 Gargantua 超大质量黑洞的吸积盘与光子环。全程配有全中文全息 HUD、实时引力透镜参数、Web Audio 原生合成宇宙音效，以及自动巡航 / 手动驾驶两种模式。
 
+新增 **米勒星着陆任务**：驾驶游骑兵号穿越阴云、进入浅海潮汐世界，用真实下降物理（重力 / 推力 / 垂直速度 / 接触判定）手动或自动降落在海面上，而不是播放一段预烘焙的着陆动画。
+
 > **在线演示**：部署到 GitHub Pages 后访问  
 > <https://alex-jam-lab.github.io/Interstellar-Travel-Simulator/>
+>
+> **米勒星任务**：<https://alex-jam-lab.github.io/Interstellar-Travel-Simulator/miller.html>
 >
 > **GitHub 仓库**：<https://github.com/Alex-jam-lab/Interstellar-Travel-Simulator>
 
@@ -14,6 +18,12 @@
 | 阶段一 · 接近虫洞 | 阶段二 · 喉部穿梭 | 阶段三 · 巨人座降临 |
 | --- | --- | --- |
 | ![接近虫洞](shots/final-approach.png) | ![喉部穿梭](shots/final-throat.png) | ![异星系降临](shots/final-emergence.png) |
+
+### 米勒星着陆任务
+
+| 任务简报 | 下降进近 | 接触海面 |
+| --- | --- | --- |
+| ![米勒星简报](shots/miller-intro.png) | ![下降进近](shots/miller-descent.png) | ![已着陆](shots/miller-landed.png) |
 
 ### 更多界面
 
@@ -83,6 +93,13 @@ npm run preview
 
 ```bash
 npm run standalone
+```
+
+会同时生成主航程与米勒星任务两个可双击文件：
+
+```text
+星际穿越-离线版.html
+米勒星-离线版.html
 ```
 
 ---
@@ -215,6 +232,52 @@ docker compose up -d --build
 
 ---
 
+## 米勒星着陆任务
+
+从主页面顶部的「米勒星」入口或启动页的「米勒星着陆任务」进入：
+
+```text
+/miller.html
+```
+
+### 环境还原
+
+- 被浅海覆盖的潮汐世界，平均水深约 0.32 m；
+- 阴云密布的天空，远处悬挂着巨大的 Gargantua 黑洞与吸积盘；
+- 巨型潮汐波从海平线推进，HUD 实时显示波前距离；
+- 米勒星 1 小时 ≈ 地球 7 年，HUD 同步显示本地时间与地球流逝时间；
+- 重力 1.30 g，海面反射、波峰白沫与溅落粒子全部程序化生成。
+
+### 真实下降物理，而不是动画
+
+游骑兵号的下降完全由状态更新驱动：
+
+```text
+重力 → 推进器推力 → 垂直速度 → 高度 → 海面接触判定
+```
+
+- 自动模式：自动控制律根据高度分段计算目标下降速度，调节推力并拉平姿态；
+- 手动模式：直接控制上升 / 下降推力与姿态，自行寻找接地时机；
+- 接触海面后根据垂直速度判定「软着陆」或「硬着陆」，并生成溅落水花与同心涟漪；
+- 整段过程没有预烘焙的相机动画或着陆关键帧。
+
+### 米勒星控制
+
+| 按键 | 功能 |
+| --- | --- |
+| `W / S` 或 `↑ / ↓` | 俯仰 |
+| `A / D` 或 `← / →` | 偏航 |
+| `Q / E` | 滚转 |
+| `Shift` | 增加上升推力 |
+| `Space` | 降低推力 / 加速下降 |
+| 鼠标拖拽 | 自由观察海面与 Gargantua |
+
+底部可随时在「自动降落 / 手动驾驶」之间切换，右侧 HUD 显示高度、垂直速度、推力、潮汐扫描、相对论时钟与起落架状态。
+
+离线体验：直接双击 [`米勒星-离线版.html`](米勒星-离线版.html)。
+
+---
+
 ## 交互说明
 
 ### 模式
@@ -266,10 +329,12 @@ docker compose up -d --build
 
 ```text
 .
-├─ index.html               # 页面结构、HUD、启动界面、参数面板
-├─ 星际穿越-离线版.html      # 可直接双击打开的单文件构建
+├─ index.html               # 主航程：页面结构、HUD、启动界面、参数面板
+├─ miller.html              # 米勒星着陆任务页面
+├─ 星际穿越-离线版.html      # 可直接双击打开的主航程单文件
+├─ 米勒星-离线版.html        # 可直接双击打开的米勒星单文件
 ├─ 启动预览.cmd             # 一键安装/构建/启动本地预览
-├─ 打开离线版.cmd           # 一键打开离线单文件
+├─ 打开离线版.cmd           # 一键打开主航程离线文件
 ├─ Dockerfile               # 多阶段构建：Node 构建 + Nginx 运行
 ├─ docker-compose.yml       # 一键启动容器
 ├─ nginx.conf               # SPA 回退、缓存与 gzip 配置
@@ -281,15 +346,17 @@ docker compose up -d --build
 ├─ .github/workflows/
 │  └─ deploy-pages.yml      # GitHub Pages 自动部署
 ├─ src/
-│  ├─ main.js               # Three.js 管线、相机航线、交互、状态与 HUD
-│  ├─ audio.js              # Web Audio 原生合成引擎
+│  ├─ main.js               # 主航程 Three.js 管线、相机航线、交互与 HUD
+│  ├─ audio.js              # 主航程 Web Audio 原生合成引擎
 │  ├─ style.css             # 全息 HUD 视觉系统与响应式布局
+│  ├─ miller.js             # 米勒星海洋 / 天空 / 着陆物理 / HUD
+│  ├─ miller.css            # 米勒星专用 HUD 与任务界面
 │  └─ shaders/
 │     ├─ scene.js           # 虫洞/透镜/双星系/黑洞/管道核心 Shader
 │     └─ post.js            # Bloom、色差、ACES、颗粒与扫描线
 ├─ TECHNICAL.md             # 数学、物理与实现技术白皮书
 ├─ tools/                   # 构建、单文件打包、自动化测试脚本
-└─ shots/                   # 调试与展示截图
+└─ shots/                   # 展示截图
 ```
 
 ---

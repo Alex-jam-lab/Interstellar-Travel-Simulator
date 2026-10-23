@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#070b0d" />
+  <title>米勒星 · 着陆任务 | 星际穿越</title>
+  <meta name="description" content="《星际穿越》米勒星着陆任务：手动或自动驾驶游骑兵号降落在浅海潮汐世界，面对巨型波浪与 Gargantua 的引力。" />
+</head>
+<body>
+  <div id="miller-app">
+    <div id="m-stage" aria-hidden="true"></div>
+
+    <!-- ================= 飞行 HUD ================= -->
+    <div id="m-hud" class="m-hud is-hidden">
+      <div class="m-frame" aria-hidden="true">
+        <i class="m-corner tl"></i><i class="m-corner tr"></i>
+        <i class="m-corner bl"></i><i class="m-corner br"></i>
+      </div>
+
+      <header class="m-topbar">
+        <div class="m-brand">
+          <div class="m-brand-mark"><span></span><span></span><span></span></div>
+          <div>
+            <div class="m-brand-title">RANGER <em>·</em> 游骑兵号</div>
+            <div class="m-brand-sub">MILLER LANDING / 米勒星着陆任务</div>
+          </div>
+        </div>
+
+        <div class="m-top-center">
+          <div class="m-phase" id="m-phase">DESCENT / 下降进近</div>
+          <div class="m-clocks">
+            <div><span>本地时间</span><b id="m-local-clock">00:00:00</b></div>
+            <div class="m-clock-divider"></div>
+            <div><span>地球已流逝</span><b id="m-earth-elapsed">+ 0 年 0 天 00 时</b></div>
+          </div>
+        </div>
+
+        <div class="m-top-actions">
+          <button id="m-audio" class="m-icon-btn" type="button" title="声音开关">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4Zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4Z"/><path class="wave" d="M17.5 5.5a8 8 0 0 1 0 13"/></svg>
+          </button>
+          <a class="m-icon-btn m-back" href="./index.html" title="返回虫洞">← 虫洞</a>
+        </div>
+      </header>
+
+      <!-- 左侧：高度 / 垂直速度 -->
+      <aside class="m-left">
+        <div class="m-panel m-alt-panel">
+          <div class="m-panel-head">
+            <span>高度表</span><em>ALTITUDE · AGL</em>
+          </div>
+          <div class="m-alt-value">
+            <b id="m-altitude">0,000</b><span>m</span>
+          </div>
+          <div class="m-alt-sub">海面相对高度</div>
+
+          <div class="m-tape">
+            <div class="m-tape-marks" id="m-alt-marks"></div>
+            <div class="m-tape-pointer"></div>
+            <div class="m-tape-readout" id="m-alt-tape">0,000</div>
+          </div>
+
+          <div class="m-vsi">
+            <div class="m-vsi-label"><span>垂直速度</span><b id="m-vsi">-00.0 <i>m/s</i></b></div>
+            <div class="m-vsi-track">
+              <i id="m-vsi-bar"></i>
+            </div>
+            <div class="m-vsi-scale"><span>-50</span><span>0</span><span>+15</span></div>
+          </div>
+        </div>
+
+        <div class="m-panel m-gear-panel">
+          <div class="m-panel-head"><span>着陆系统</span><em>LANDER STATUS</em></div>
+          <div class="m-gear-row"><span>起落架</span><b id="m-gear">已展开</b><i class="ok"></i></div>
+          <div class="m-gear-row"><span>下降推进器</span><b id="m-thruster-state">待命</b><i class="ok"></i></div>
+          <div class="m-gear-row"><span>着陆判定</span><b id="m-touchdown-state">等待接触海面</b><i></i></div>
+        </div>
+      </aside>
+
+      <!-- 右侧：米勒星环境 -->
+      <aside class="m-right">
+        <div class="m-panel m-env-panel">
+          <div class="m-panel-head"><span>米勒星环境</span><em>MILLER'S PLANET</em></div>
+          <div class="m-env-grid">
+            <div><span>重力</span><b>1.30 <i>g</i></b></div>
+            <div><span>海面波高</span><b id="m-wave">18.6 <i>m</i></b></div>
+            <div><span>平均水深</span><b>0.32 <i>m</i></b></div>
+            <div><span>时间膨胀</span><b>×61,320</b></div>
+            <div><span>Gargantua</span><b>视界占空</b></div>
+            <div><span>大气</span><b>N₂ / O₂ 薄雾</b></div>
+          </div>
+          <div class="m-env-note">本地 1 小时 ≈ 地球 7 年。浅海世界，潮汐波可达数百米。</div>
+        </div>
+
+        <div class="m-panel m-wave-panel">
+          <div class="m-panel-head"><span>潮汐扫描</span><em>TIDAL SCAN</em></div>
+          <div class="m-wave-scan">
+            <svg id="m-wave-svg" viewBox="0 0 260 95" aria-hidden="true">
+              <defs>
+                <linearGradient id="m-wave-grad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0" stop-color="#8fe8ff" stop-opacity="0"/>
+                  <stop offset=".35" stop-color="#8fe8ff" stop-opacity=".85"/>
+                  <stop offset=".7" stop-color="#ffd39a" stop-opacity=".7"/>
+                  <stop offset="1" stop-color="#ffd39a" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path d="M0 76 L260 76" class="m-wave-axis"/>
+              <path id="m-wave-line" d="" fill="none" stroke="url(#m-wave-grad)" stroke-width="1.4"/>
+              <path id="m-wave-line2" d="" fill="none" stroke="rgba(143,232,255,.28)" stroke-width=".8"/>
+              <circle id="m-wave-dot" cx="220" cy="56" r="3" class="m-wave-dot"/>
+            </svg>
+            <div class="m-wave-meta"><span>波前距离</span><b id="m-wave-distance">— km</b><em>潮汐波正在接近</em></div>
+          </div>
+        </div>
+
+        <div class="m-panel m-dilation">
+          <div class="m-panel-head"><span>相对论时钟</span><em>RELATIVISTIC CLOCK</em></div>
+          <div class="m-dilation-main"><b id="m-earth-years">0.000</b><span>地球年</span></div>
+          <div class="m-dilation-sub">高度越接近海面，潮汐时间膨胀效应越强。</div>
+        </div>
+      </aside>
+
+      <!-- 移动端紧凑状态 -->
+      <div class="m-mobile-status">
+        <div><span>高度 AGL</span><b id="m-mobile-alt">0,000</b><em>m</em></div>
+        <div><span>垂直速度</span><b id="m-mobile-vsi">-0.0</b><em>m/s</em></div>
+        <div><span>本地 / 地球</span><b id="m-mobile-time">00:00:00</b><em id="m-mobile-earth">0 年 0 天</em></div>
+      </div>
+
+      <!-- 中央准星 -->
+      <div class="m-reticle" aria-hidden="true">
+        <svg viewBox="0 0 220 220">
+          <circle cx="110" cy="110" r="52" class="m-ret-ring"/>
+          <circle cx="110" cy="110" r="68" class="m-ret-ring faint"/>
+          <path d="M110 20v16M110 184v16M20 110h16M184 110h16" class="m-ret-tick"/>
+          <path d="M110 60l7 12-7-3-7 3z" class="m-ret-arrow"/>
+          <path d="M110 160l7-12-7 3-7-3z" class="m-ret-arrow dim"/>
+          <circle cx="110" cy="110" r="2.5" class="m-ret-dot"/>
+          <path id="m-descent-vector" d="M110 110l0 58" class="m-descent-vector"/>
+        </svg>
+        <div class="m-reticle-label">下降轴线</div>
+      </div>
+
+      <div class="m-warning" id="m-warning">
+        <i></i><span id="m-warning-text">下降速度偏高 · 请增加上升推力</span>
+      </div>
+
+      <div class="m-wave-banner" id="m-wave-banner">
+        <span>潮汐波接近</span><b>保持推力 · 准备接触海面</b>
+      </div>
+
+      <!-- 底部控制 -->
+      <footer class="m-bottom">
+        <div class="m-controls-left">
+          <div class="m-mode-switch">
+            <button id="m-auto-btn" class="m-mode-btn is-active" type="button"><i></i>自动降落</button>
+            <button id="m-manual-btn" class="m-mode-btn" type="button"><i></i>手动驾驶</button>
+          </div>
+          <div class="m-keyhints">
+            <span><kbd>W</kbd><kbd>S</kbd> 俯仰</span>
+            <span><kbd>A</kbd><kbd>D</kbd> 偏航</span>
+            <span><kbd>Q</kbd><kbd>E</kbd> 滚转</span>
+            <span><kbd>SHIFT</kbd> 上升推力</span>
+            <span><kbd>SPACE</kbd> 降低推力 / 下降</span>
+          </div>
+        </div>
+
+        <div class="m-throttle">
+          <div class="m-throttle-head"><span>下降推进器</span><em>THRUST</em></div>
+          <div class="m-throttle-track"><i id="m-throttle-bar"></i></div>
+          <div class="m-throttle-info"><b id="m-throttle-value">42%</b><span>推力</span><em id="m-mode-label">AUTO DESCENT</em></div>
+        </div>
+
+        <div class="m-controls-right">
+          <button id="m-land-btn" class="m-land-btn" type="button">
+            <span>自动降落</span><em>AUTO LAND</em>
+          </button>
+          <button id="m-reset-btn" class="m-ghost-btn" type="button" title="重新开始">
+            <svg viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 2 7M4 4v6h6"/></svg>
+            <span>重来</span>
+          </button>
+        </div>
+      </footer>
+
+      <div id="m-toast" class="m-toast"></div>
+    </div>
+
+    <!-- ================= 任务简报 / 启动 ================= -->
+    <section id="m-intro" class="m-intro">
+      <div class="m-intro-backdrop"></div>
+      <div class="m-intro-inner">
+        <div class="m-intro-topline">
+          <span>ENDURANCE · RANGER LANDING</span>
+          <span>MILLER'S PLANET / 米勒星</span>
+        </div>
+
+        <div class="m-intro-main">
+          <div class="m-intro-kicker"><i></i>潮汐世界 · 浅海 · 时间膨胀</div>
+          <h1 class="m-intro-title">
+            <span class="m-title-en">MILLER'S PLANET</span>
+            <span class="m-title-cn">米勒星</span>
+          </h1>
+          <div class="m-intro-line"></div>
+          <p class="m-intro-desc">
+            一颗被浅海覆盖的潮汐星球，围绕 Gargantua 极端靠近运行。<br />
+            这里一小时，地球已经过去七年。海面平静得像一面镜子，但巨型潮汐波正在逼近。
+          </p>
+
+          <div class="m-intro-stats">
+            <div><span>重力</span><b>1.30 g</b></div>
+            <div><span>平均水深</span><b>0.32 m</b></div>
+            <div><span>时间膨胀</span><b>×61,320</b></div>
+            <div><span>任务</span><b>着陆 · 取样</b></div>
+          </div>
+
+          <div class="m-intro-actions">
+            <button id="m-start-auto" class="m-start-btn" type="button">
+              <span class="m-start-bg"></span>
+              <span class="m-start-content"><b>自动降落</b><em>AUTO LANDING</em></span>
+              <span class="m-start-arrow">→</span>
+            </button>
+            <button id="m-start-manual" class="m-start-btn secondary" type="button">
+              <span class="m-start-content"><b>手动接管</b><em>MANUAL DESCENT</em></span>
+              <span class="m-start-arrow">→</span>
+            </button>
+          </div>
+          <div class="m-intro-note">
+            <span>建议佩戴耳机 · Web Audio 实时合成风声 / 海浪 / 引擎</span>
+            <span>真实下降物理 · 非动画着陆</span>
+          </div>
+        </div>
+
+        <div class="m-intro-corner tl"></div><div class="m-intro-corner tr"></div>
+        <div class="m-intro-corner bl"></div><div class="m-intro-corner br"></div>
+      </div>
+    </section>
+
+    <!-- ================= 着陆完成 ================= -->
+    <section id="m-landed" class="m-landed is-hidden">
+      <div class="m-landed-card">
+        <div class="m-landed-kicker">TOUCHDOWN CONFIRMED</div>
+        <h2 id="m-landed-title">米勒星 · 已着陆</h2>
+        <p id="m-landed-desc">游骑兵号稳稳停在浅海表面。潮汐波仍在远方翻涌。</p>
+        <div class="m-landed-stats">
+          <div><span>本地耗时</span><b id="m-landed-local">00:00</b></div>
+          <div><span>地球已流逝</span><b id="m-landed-earth">0 年 0 天</b></div>
+          <div><span>着陆速度</span><b id="m-landed-speed">-1.2 m/s</b></div>
+        </div>
+        <div class="m-landed-actions">
+          <button id="m-retry" class="m-start-btn" type="button">
+            <span class="m-start-content"><b>再次降落</b><em>LAND AGAIN</em></span>
+            <span class="m-start-arrow">↺</span>
+          </button>
+          <a class="m-ghost-btn m-return" href="./index.html">返回虫洞</a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="/src/miller.js"></script>
+</body>
+</html>
